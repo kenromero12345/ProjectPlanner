@@ -26,7 +26,8 @@ class Controller:
     def task_list_update(self):
         self.mView.mTaskList.mTvTaskList.delete(*self.mView.mTaskList.mTvTaskList.get_children())
         for t in self.mModel.mTaskList:
-            self.mView.mTaskList.mTvTaskList.insert("", "end", values=(t.mTitle, t.mMode, t.mSeverity, t.mInProgress))
+            self.mView.mTaskList.mTvTaskList.insert("", "end", values=(t.mTitle, t.mMode, t.mSeverity, t.mInProgress
+                                                                       , t.mInitialDate, t.mDueDate))
         # self.task_list.insert("", "end"
         #                           , values=(self.entry_title.get(), self.var_mode.get()
         #                                     , self.scale_severity.get(), self.var_in_progress.get()))
@@ -34,7 +35,8 @@ class Controller:
     def submit_task(self):
         t = task.Task(self.mAddTask.mEntryTitle.get(), self.mAddTask.mTextDescription.get("1.0", "end")
                       , self.mAddTask.mVarMode.get(), self.mAddTask.mVarAssignees.get()
-                      , self.mAddTask.mScaleSeverity.get(), self.mAddTask.mVarInProgress.get())
+                      , self.mAddTask.mScaleSeverity.get(), self.mAddTask.mVarInProgress.get()
+                      , self.mAddTask.mDEInitial.get(), self.mAddTask.mDEEstimated.get())
         self.mModel.mTaskList.append(t)
         self.task_list_update()
         # self.view.list_box.insert("", "end"
