@@ -55,7 +55,7 @@ class Controller:
                 self.task_list_update()
                 self.mAddTask.mTk.destroy()
 
-    def edit_task(self):
+    def edit_task_view(self):
         #unique constraint
         flag = True
         flag2 = True
@@ -68,11 +68,8 @@ class Controller:
                     break
                 flag = False
         if flag2:
-            #remove old task
-            for t in self.mModel.mTaskList:
-                if t.mTitle == self.mEditTask.mOldTitle:
-                    self.mModel.mTaskList.remove(t)
-                    break
+            self.delete_task()
+
             #add task
             t = task.Task(self.mEditTask.mVarTitle.get(), self.mEditTask.mTextDescription.get("1.0", "end"),
                           self.mEditTask.mVarMode.get(), self.mEditTask.mVarAssignees.get(),
@@ -82,7 +79,20 @@ class Controller:
             self.task_list_update()
             self.mEditTask.mTk.destroy()
 
+    def delete_task_view(self):
+        self.delete_task()
+        self.task_list_update()
+        self.mEditTask.mTk.destroy()
+
+    def delete_task(self):
+        #remove old task
+        for t in self.mModel.mTaskList:
+            if t.mTitle == self.mEditTask.mOldTitle:
+                self.mModel.mTaskList.remove(t)
+                break
+
     def on_task_double_click(self, instance):
+        # if a task exists, edit it
         if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
             temp_root = tk.Tk()
             item = self.mView.mTaskList.mTvTaskList.selection()[0]
@@ -93,4 +103,5 @@ class Controller:
                     break
             #TODO if there is an error, catch it
             self.mEditTask = EditTask(temp_root, task)
-            self.mEditTask.mBtnSubmit.config(command=self.edit_task)
+            self.mEditTask.mBtnSubmit.config(command=self.edit_task_view)
+            self.mEditTask.mBtnDelete.config(command=self.delete_task_view)
