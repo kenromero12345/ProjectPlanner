@@ -2,7 +2,7 @@ from View.addTask import AddTask
 from tkinter import ttk
 
 
-class EditTask(AddTask):
+class UpdateTask(AddTask):
     def __init__(self, t, task):
         AddTask.__init__(self, t)
         self.mVarTitle.set(task.mTitle)
@@ -14,7 +14,7 @@ class EditTask(AddTask):
         self.mDEEstimated.set_date(task.mDueDate)
         self.mTextDescription.insert(1.0, task.mDesc)
         self.mBtnSubmit.config(text="Update")
-        self.mBtnDelete = ttk.Button(self.mframeCommand, text="Delete")
+        self.mBtnDelete = ttk.Button(self.mFrameCommand, text="Delete")
         self.mBtnDelete.pack(side="left", expand=True, fill='both', padx=5, pady=5)
         self.mOldTitle = task.mTitle
-        self.mTk.wm_title("Editing Task...")
+        self.mTk.wm_title("Updating Task...")
