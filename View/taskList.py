@@ -1,6 +1,5 @@
-import tkinter as tk  # python 3
+import tkinter as tk
 from tkinter import ttk
-from View import addTask
 
 cols = ("Title", "Mode", "Severity", "In Progress", "Initial Date", "Due Date")
 
@@ -19,6 +18,3 @@ class TaskList:
         self.mTvTaskList.column("Initial Date", minwidth=70, width=70, stretch=False)
         self.mTvTaskList.column("Due Date", minwidth=70, width=70, stretch=False)
         self.mTvTaskList.pack(side="top", expand=True, fill='both', padx=5, pady=5)
-
-
-

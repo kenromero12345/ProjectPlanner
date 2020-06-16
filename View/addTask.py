@@ -19,7 +19,7 @@ class AddTask:
 
     def __init__(self, t):
         self.mTk = t
-        self.mTk.resizable(0,0)
+        self.mTk.resizable(0, 0)
         self.mVarInProgress = tk.StringVar(self.mTk)
         self.mScaleSeverity = tk.Scale(self.mTk, from_=1.0, to=10.0, tickinterval=1, orient="horizontal")
         self.mVarAssignees = tk.StringVar(self.mTk)
@@ -27,11 +27,11 @@ class AddTask:
         self.mTextDescription = tk.Text(self.mTk, height=10, width=20)
         self.mVarTitle = tk.StringVar(self.mTk)
         self.mVarTitle.set("")
-        mEntryTitle = ttk.Entry(self.mTk, font=NORM_FONT, textvariable=self.mVarTitle)
+        m_entry_title = ttk.Entry(self.mTk, font=NORM_FONT, textvariable=self.mVarTitle)
         self.mTk.wm_title("Adding Task...")
         label_title = ttk.Label(self.mTk, text="Title", font=NORM_FONT)
         label_title.pack(side="top", fill="x", pady=5, padx=5)
-        mEntryTitle.pack(side="top", fill="x", padx=10)
+        m_entry_title.pack(side="top", fill="x", padx=10)
         label_description = ttk.Label(self.mTk, text="Description", font=NORM_FONT)
         label_description.pack(side="top", fill="x", pady=5, padx=5)
         self.mTextDescription.pack(side="top", fill="x", padx=10)
@@ -59,10 +59,6 @@ class AddTask:
         # opt.pack(fill="x", padx=5)
         label_severity = ttk.Label(self.mTk, text="Severity", font=NORM_FONT)
         label_severity.pack(side="top", fill="x", pady=(5, 0), padx=5)
-        # v4 = tk.StringVar(frame)
-        # v4.set(1)
-        # entry3 = ttk.Entry(frame, variable=v4, font=NORM_FONT)
-        # entry3.pack(side="top", fill="x", padx=5)
         self.mScaleSeverity.pack(side="top", fill="x", padx=10)
         self.mVarInProgress.set("Yes")  # initialize
         label_assignees = ttk.Label(self.mTk, text="Assignees", font=NORM_FONT)
