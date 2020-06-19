@@ -1,4 +1,4 @@
-import tkinter as tk  # python 3
+import tkinter as tk
 from tkinter import ttk
 from View import view
 from tkcalendar import DateEntry
@@ -38,9 +38,27 @@ class AddTask:
         label_mode = ttk.Label(self.mTk, text="Mode", font=NORM_FONT)
         label_mode.pack(side="top", fill="x", pady=5, padx=5)
         self.mVarMode.set(MODES[0])  # initialize
-        for text in MODES:
-            b = tk.Radiobutton(self.mTk, text=text, indicatoron=0, width=25, val=text, variable=self.mVarMode)
-            b.pack(anchor=tk.W, fill="x", pady=2, padx=10)
+        # for text in MODES:
+        self.mRBtnBacklog = tk.Radiobutton(self.mTk, text=MODES[0], indicatoron=0, width=25, val=MODES[0],
+                                           variable=self.mVarMode, command=self.backlogClicked, bg="grey", fg="black")
+        self.mRBtnBacklog.pack(anchor=tk.W, fill="x", pady=2, padx=10)
+        self.mRBtnTodo = tk.Radiobutton(self.mTk, text=MODES[1], indicatoron=0, width=25, val=MODES[1],
+                                        variable=self.mVarMode, command=self.todoClicked, bg="grey", fg="white")
+        self.mRBtnTodo.pack(anchor=tk.W, fill="x", pady=2, padx=10)
+        self.mRBtnTesting = tk.Radiobutton(self.mTk, text=MODES[2], indicatoron=0, width=25, val=MODES[2],
+                                           variable=self.mVarMode, command=self.testingClicked, bg="grey", fg="white")
+        self.mRBtnTesting.pack(anchor=tk.W, fill="x", pady=2, padx=10)
+        label_type = ttk.Label(self.mTk, text="Type", font=NORM_FONT)
+        label_type.pack(side="top", fill="x", pady=5, padx=5)
+        frame_type = ttk.Frame(self.mTk)
+        self.mIsBug = False
+        self.mIsBonus = False
+        self.mBtnBug = tk.Button(frame_type, text="Bug", command=self.bugClicked)
+        self.mBtnBug.pack(side="left", expand=True, fill='both', padx=5, pady=5)
+        self.mBtnBonus = tk.Button(frame_type, text="Bonus", command=self.bonusClicked)
+        self.mBtnBonus.pack(side="right", expand=True, fill='both', padx=5, pady=5)
+        self.mOrigBtnColor = self.mBtnBug.cget("bg")
+        frame_type.pack(side="top", fill="x")
         frame_label_date = ttk.Frame(self.mTk)
         label_initial_date = ttk.Label(frame_label_date, text="Initial Date", font=NORM_FONT)
         label_initial_date.pack(side="left", fill="x", pady=5, padx=5)
@@ -50,13 +68,9 @@ class AddTask:
         frame_date = ttk.Frame(self.mTk)
         self.mDEInitial = DateEntry(frame_date, width=12, background='blue', foreground='white', borderwidth=2)
         self.mDEInitial.pack(side="left", expand=True, fill='both', pady=5, padx=5)
-        self.mDEEstimated = DateEntry(frame_date, width=12, background='blue', foreground='white', borderwidth=2)
-        self.mDEEstimated.pack(side="right", expand=True, fill='both', pady=5, padx=5)
+        self.mDEDue = DateEntry(frame_date, width=12, background='blue', foreground='white', borderwidth=2)
+        self.mDEDue.pack(side="right", expand=True, fill='both', pady=5, padx=5)
         frame_date.pack(side="top", fill="x")
-        # opt = tk.OptionMenu(frame, v2, *GROUP)
-        # opt
-        # # opt.config(font=('Helvetica', 12))
-        # opt.pack(fill="x", padx=5)
         label_severity = ttk.Label(self.mTk, text="Severity", font=NORM_FONT)
         label_severity.pack(side="top", fill="x", pady=(5, 0), padx=5)
         self.mScaleSeverity.pack(side="top", fill="x", padx=10)
@@ -70,20 +84,49 @@ class AddTask:
         label_in_progress = ttk.Label(self.mTk, text="In Progress", font=NORM_FONT)
         label_in_progress.pack(side="top", fill="x", pady=5, padx=5)
         # TODO only if TESTING or TODO not Backlog
-        frame_in_progress = ttk.Frame(self.mTk)
-        rb_yes = tk.Radiobutton(frame_in_progress, text="Yes", indicatoron=0, width=30, val="Yes",
+        self.mFrameInProgress = ttk.Frame(self.mTk)
+        rb_yes = tk.Radiobutton(self.mFrameInProgress, text="Yes", indicatoron=0, width=30, val="Yes",
                                 variable=self.mVarInProgress)
         rb_yes.pack(side="left", fill="x", pady=(2, 8), padx=(10, 5))
-        rb_no = tk.Radiobutton(frame_in_progress, text="No", indicatoron=0, width=30, val="No",
+        rb_no = tk.Radiobutton(self.mFrameInProgress, text="No", indicatoron=0, width=30, val="No",
                                variable=self.mVarInProgress)
         rb_no.pack(side="right", fill="x", pady=(2, 8), padx=(5, 10))
-        frame_in_progress.pack(side="top", fill="x")
+        self.mFrameInProgress.pack(side="top", fill="x")
         separator = ttk.Separator(self.mTk, orient="horizontal")
         separator.pack(side="top", fill="x", padx=5)
         self.mFrameCommand = ttk.Frame(self.mTk)
-        self.mBtnSubmit = ttk.Button(self.mFrameCommand, text="Submit")
+        self.mBtnSubmit = tk.Button(self.mFrameCommand, text="Submit", bg="green", fg="white")
         self.mBtnSubmit.pack(side="left", expand=True, fill='both', padx=5, pady=5)
-        button_cancel = ttk.Button(self.mFrameCommand, text="Cancel", command=self.mTk.destroy)
-        button_cancel.pack(side="right", expand=True, fill='both', padx=5, pady=5)
+        self.mBtnCancel = tk.Button(self.mFrameCommand, text="Cancel", command=self.mTk.destroy, bg="gray", fg="white")
+        self.mBtnCancel.pack(side="right", expand=True, fill='both', padx=5, pady=5)
         self.mFrameCommand.pack(side="top", fill="x")
         view.center(self.mTk)
+
+    def bugClicked(self):
+        if self.mIsBug:
+            self.mBtnBug.config(bg=self.mOrigBtnColor, fg="black")
+        else:
+            self.mBtnBug.config(bg="red", fg="white")
+        self.mIsBug = not self.mIsBug
+
+    def bonusClicked(self):
+        if self.mIsBonus:
+            self.mBtnBonus.config(bg=self.mOrigBtnColor, fg="black")
+        else:
+            self.mBtnBonus.config(bg="purple", fg="white")
+        self.mIsBonus = not self.mIsBonus
+
+    def backlogClicked(self):
+        self.mRBtnBacklog.config(fg="black")
+        self.mRBtnTesting.config(fg="white")
+        self.mRBtnTodo.config(fg="white")
+
+    def todoClicked(self):
+        self.mRBtnBacklog.config(fg="white")
+        self.mRBtnTesting.config(fg="white")
+        self.mRBtnTodo.config(fg="black")
+
+    def testingClicked(self):
+        self.mRBtnBacklog.config(fg="white")
+        self.mRBtnTesting.config(fg="black")
+        self.mRBtnTodo.config(fg="white")

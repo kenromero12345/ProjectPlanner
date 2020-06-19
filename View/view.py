@@ -7,10 +7,10 @@ class View:
         # initialize var
         self.mMenuFile = None
         self.mMenuHelp = None
+        self.mMenuEdit = None
 
         frame = tk.Frame(root)
         self.menu_bar(root)
-        # self.model = model
         self.mTaskList = taskList.TaskList(frame)
         frame.pack()
         center(root)
@@ -18,14 +18,19 @@ class View:
     def menu_bar(self, root):
         menu = tk.Menu(root)
         self.mMenuFile = tk.Menu(menu, tearoff=0)
-        self.mMenuFile.add_command(label="New Project...")
-        self.mMenuFile.add_command(label="New Task...")
+        self.mMenuFile.add_command(label="New Project")
+        self.mMenuFile.add_command(label="New Task")
+        self.mMenuFile.add_command(label="Update Member...")
         self.mMenuFile.add_command(label="Open...")
         self.mMenuFile.add_command(label="Save...")
         self.mMenuFile.add_command(label="Save As...")
         self.mMenuFile.add_separator()
         self.mMenuFile.add_command(label="Exit")
         menu.add_cascade(label="File", menu=self.mMenuFile)
+        self.mMenuEdit = tk.Menu(menu, tearoff=0)
+        self.mMenuEdit.add_command(label="Filter...")
+        self.mMenuEdit.add_command(label="Reset Filter")
+        menu.add_cascade(label="Edit", menu=self.mMenuEdit)
         self.mMenuHelp = tk.Menu(menu, tearoff=0)
         self.mMenuHelp.add_command(label="Help")
         self.mMenuHelp.add_command(label="About")
