@@ -11,6 +11,11 @@ from View import filterTasks
 from View import view
 from View.updateTask import UpdateTask
 
+ABOUT_MSG = "A python application for project planning for programmers to use to be efficient in their tasks with " \
+            "their team or their own.\n\nCreated by Ken Gil Romero, a master student of University of Washington"
+
+FILTER_OFF = "Filter: OFF"
+FILTER_ON = "Filter: ON"
 AUTO_SAVE_PATH_TXT = "\\auto_save_path.txt"
 AUTO_SAVE_PROJECT_TXT = "\\auto_save_project.txt"
 
@@ -28,6 +33,24 @@ class Controller:
         self.mRoot = tk.Tk()
         self.mModel = model.Model()
         self.mView = view.View(self.mRoot)
+        self.mIsNo = None
+        self.mIsYes = None
+        self.mDEInitialMin = None
+        self.mDEInitialMax = None
+        self.mDEDueMin = None
+        self.mDEDueMax = None
+        self.mScaleSeverityMin = None
+        self.mScaleSeverityMax = None
+        self.mIsBugOn = None
+        self.mIsBonusOff = None
+        self.mIsBacklog = None
+        self.mIsTodo = None
+        self.mIsTesting = None
+        self.mIsDoneOn = None
+        self.mIsDoneOff = None
+        self.mIsBugOff = None
+        self.mIsBonusOff = None
+        self.mIsBonusOn = None
 
         # menu bar command
         self.mView.mMenuFile.entryconfigure(0, command=self.newProject)
@@ -39,23 +62,44 @@ class Controller:
         self.mView.mMenuFile.entryconfigure(7, command=self.quit_and_save)
         self.mView.mMenuHelp.entryconfigure(0, command=self.tutorial)
         self.mView.mMenuHelp.entryconfigure(1, command=about)
-        self.mView.mMenuEdit.entryconfigure(0, command=self.filterTasks)
+        self.mView.mMenuEdit.entryconfigure(0, command=self.openFilter)
         self.mView.mMenuEdit.entryconfigure(1, command=self.taskListUpdate)
 
         # Task list
         self.mView.mTaskList.mBtnAddTask.config(command=self.addTask)
         self.mView.mTaskList.mBtnUpdateMember.config(command=self.updateMembers)
-        self.mView.mTaskList.mBtnFilter.config(command=self.filterTasks)
+        self.mView.mTaskList.mBtnFilter.config(command=self.openFilter)
         self.mView.mTaskList.mBtnResetFilter.config(command=self.taskListUpdate)
         self.mView.mTaskList.mTvTaskList.bind("<Double-1>", self.taskDoubleClicked)
         self.mView.mTaskList.mTvTaskList.bind("<Button-1>", self.taskClicked)
 
         self.mRoot.protocol('WM_DELETE_WINDOW', self.quit_and_save)  # override close button
 
-    def filterTasks(self):
+    def openFilter(self):
         temp_root = tk.Tk()
         self.mFilterTasks = filterTasks.FilterTasks(temp_root)
-        self.mFilterTasks.mBtnSubmit.config(command=self.filter)
+        self.mFilterTasks.mBtnSubmit.config(command=self.filterClicked)
+
+    def filterClicked(self):
+        self.mIsNo = self.mFilterTasks.mIsNo
+        self.mIsYes = self.mFilterTasks.mIsYes
+        self.mDEInitialMin = self.mFilterTasks.mDEInitialMin.get_date()
+        self.mDEInitialMax = self.mFilterTasks.mDEInitialMax.get_date()
+        self.mDEDueMin = self.mFilterTasks.mDEDueMin.get_date()
+        self.mDEDueMax = self.mFilterTasks.mDEDueMax.get_date()
+        self.mScaleSeverityMin = self.mFilterTasks.mScaleSeverityMin.get()
+        self.mScaleSeverityMax = self.mFilterTasks.mScaleSeverityMax.get()
+        self.mIsBugOn = self.mFilterTasks.mIsBugOn
+        self.mIsBonusOn = self.mFilterTasks.mIsBonusOn
+        self.mIsBacklog = self.mFilterTasks.mIsBacklog
+        self.mIsTodo = self.mFilterTasks.mIsTodo
+        self.mIsTesting = self.mFilterTasks.mIsTesting
+        self.mIsDoneOn = self.mFilterTasks.mIsDoneOn
+        self.mIsDoneOff = self.mFilterTasks.mIsDoneOff
+        self.mIsBugOff = self.mFilterTasks.mIsBugOff
+        self.mIsBonusOff = self.mFilterTasks.mIsBonusOff
+        self.filter()
+        self.mFilterTasks.mTk.destroy()
 
     def filter(self):
         # delete all tasks in view
@@ -63,22 +107,20 @@ class Controller:
 
         # add all task in view
         for t in self.mModel.mTaskList:
-            print(self.mFilterTasks.mDEDueMin.get_date() <= t.mDueDate <= self.mFilterTasks.mDEDueMax.get_date())
-            if ((self.mFilterTasks.mIsNo == t.mIsNo or self.mFilterTasks.mIsYes == t.mIsYes) and
-                    (self.mFilterTasks.mDEInitialMin.get_date() <= t.mInitialDate <=
-                     self.mFilterTasks.mDEInitialMax.get_date()) and
-                    (self.mFilterTasks.mDEDueMin.get_date() <= t.mDueDate <= self.mFilterTasks.mDEDueMax.get_date()) and
-                    (self.mFilterTasks.mScaleSeverityMin.get() <= t.mSeverity <=
-                     self.mFilterTasks.mScaleSeverityMax.get()) and
-                    ((self.mFilterTasks.mIsBug == t.mIsBug) and (self.mFilterTasks.mIsBonus == t.mIsBonus)) and
-                    ((self.mFilterTasks.mIsBacklog == t.mIsBacklog) or (self.mFilterTasks.mIsTodo == t.mIsTodo) or
-                     (self.mFilterTasks.mIsTesting == t.mIsTesting))):
+            if ((self.mIsNo == t.mIsNo or self.mIsYes == t.mIsYes) and
+                    (self.mDEInitialMin <= t.mInitialDate <= self.mDEInitialMax) and
+                    (self.mDEDueMin <= t.mDueDate <= self.mDEDueMax) and
+                    (self.mScaleSeverityMin <= t.mSeverity <= self.mScaleSeverityMax) and
+                    ((self.mIsBugOn == t.mIsBugOn or self.mIsBugOff == t.mIsBugOff) and
+                     (self.mIsBonusOn == t.mIsBonusOn or self.mIsBonusOff == t.mIsBonusOff)) and
+                    ((self.mIsBacklog == t.mIsBacklog) or (self.mIsTodo == t.mIsTodo) or
+                     (self.mIsTesting == t.mIsTesting)) and
+                    (self.mIsDoneOn == t.mIsDoneOn or self.mIsDoneOff == t.mIsDoneOff)):
                 self.mView.mTaskList.mTvTaskList.insert("", "end",
                                                         values=(t.mTitle, t.mMode, t.mSeverity, t.mInProgress,
-                                                                t.mInitialDate, t.mDueDate, t.mIsBug, t.mIsBonus,
+                                                                t.mInitialDate, t.mDueDate, t.mIsBugOn, t.mIsBonusOn,
                                                                 t.mIsDone))
-        self.mFilterTasks.mTk.destroy()
-        self.mView.mTaskList.mLblFilter.config(text="Filter: ON")
+        self.mView.mTaskList.mLblFilter.config(text=FILTER_ON)
 
     def run(self):
         self.mRoot.title("Project Planner")
@@ -153,9 +195,9 @@ class Controller:
         for t in self.mModel.mTaskList:
             self.mView.mTaskList.mTvTaskList.insert("", "end",
                                                     values=(t.mTitle, t.mMode, t.mSeverity, t.mInProgress,
-                                                            t.mInitialDate, t.mDueDate, t.mIsBug, t.mIsBonus,
+                                                            t.mInitialDate, t.mDueDate, t.mIsBugOn, t.mIsBonusOn,
                                                             t.mIsDone))
-        self.mView.mTaskList.mLblFilter.config(text="Filter: OFF")
+        self.mView.mTaskList.mLblFilter.config(text=FILTER_OFF)
 
     def submitTask(self):
         if self.mAddTask.mVarTitle.get().strip() == "":  # empty title constraint
@@ -168,7 +210,7 @@ class Controller:
                           self.mAddTask.mVarMode.get(), self.mAddTask.mVarAssignees.get(),
                           self.mAddTask.mScaleSeverity.get(), self.mAddTask.mVarInProgress.get(),
                           self.mAddTask.mDEInitial.get_date(), self.mAddTask.mDEDue.get_date(),
-                          self.mAddTask.mIsBug, self.mAddTask.mIsBonus)
+                          self.mAddTask.mIsBug, self.mAddTask.mIsBonus, False)
             self.mModel.mTaskList.append(t)
 
             self.taskListUpdate()  # update task list view
@@ -197,17 +239,17 @@ class Controller:
         else:
             old_t = self.deleteTask()  # delete old task
 
+            if self.mIsDoneUpdated:
+                temp_done = not old_t.mIsDone
+            else:
+                temp_done = old_t.mIsDone
+
             # add task
             t = task.Task(self.mUpdateTask.mVarTitle.get(), self.mUpdateTask.mTextDescription.get("1.0", "end"),
                           self.mUpdateTask.mVarMode.get(), self.mUpdateTask.mVarAssignees.get(),
                           self.mUpdateTask.mScaleSeverity.get(), self.mUpdateTask.mVarInProgress.get(),
                           self.mUpdateTask.mDEInitial.get_date(), self.mUpdateTask.mDEDue.get_date(),
-                          self.mUpdateTask.mIsBug, self.mUpdateTask.mIsBonus)
-
-            if self.mIsDoneUpdated:
-                t.mIsDone = not old_t.mIsDone
-            else:
-                t.mIsDone = old_t.mIsDone
+                          self.mUpdateTask.mIsBug, self.mUpdateTask.mIsBonus, temp_done)
 
             self.mModel.mTaskList.append(t)
 
@@ -275,7 +317,10 @@ class Controller:
             else:
                 self.mModel.sort_by_due_date(True)
                 self.mIsReverse = True
-        self.taskListUpdate()
+        if self.mView.mTaskList.mLblFilter['text'] == FILTER_ON:
+            self.filter()
+        else:
+            self.taskListUpdate()
         self.mTLColumnClicked = self.mView.mTaskList.mTvTaskList.identify_column(instance.x)
 
     def taskDoubleClicked(self, instance):
@@ -302,6 +347,4 @@ class Controller:
 
 
 def about():
-    messagebox.showinfo(title="About", message="A python application for project planning for programmers to use to be "
-                                               "efficient in their tasks with their team or their own.\n\nCreated by "
-                                               "Ken Gil Romero, a master student of University of Washington")
+    messagebox.showinfo(title="About", message=ABOUT_MSG)

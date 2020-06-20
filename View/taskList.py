@@ -25,13 +25,24 @@ class TaskList:
 
         top_frame.pack(side="top", expand=True, fill='both')
 
-        self.mTvTaskList = ttk.Treeview(frame, columns=cols, show='headings')
+        bottom_frame= tk.Frame(frame)
+
+        self.mTvTaskList = ttk.Treeview(bottom_frame, columns=cols, show='headings')
         for col in cols:
-            self.mTvTaskList.heading(col, text=col)
+            self.mTvTaskList.heading(col, text=col, anchor="center")
 
         for col in cols:
-            self.mTvTaskList.column(col, minwidth=70, width=70, stretch=False)
+            self.mTvTaskList.column(col, minwidth=66, width=66, stretch=False, anchor="center")
 
-        self.mTvTaskList.column("Title", minwidth=300, width=500, stretch=False)
+        self.mTvTaskList.column("Title", minwidth=300, width=500, stretch=False, anchor="w")
 
-        self.mTvTaskList.pack(side="top", expand=True, fill='both', padx=5, pady=5)
+        scrollbar = ttk.Scrollbar(bottom_frame, orient="vertical", command=self.mTvTaskList.yview)
+
+        self.mTvTaskList.configure(xscrollcommand=scrollbar.set)
+
+        self.mTvTaskList.pack(side="left", expand=True, fill='both', padx=(5, 0), pady=5)
+
+        scrollbar.pack(side="right", expand=True, fill='both', padx=(0, 5), pady=5)
+
+        bottom_frame.pack(side="top", expand=True, fill='both')
+

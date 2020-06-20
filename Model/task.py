@@ -1,5 +1,5 @@
 class Task:
-    def __init__(self, title, desc, mode, assignees, severity, in_progress, init_date, due_date, isBug, isBonus):
+    def __init__(self, title, desc, mode, assignees, severity, in_progress, init_date, due_date, isBug, isBonus, isDone):
         self.mTitle = title
         self.mDesc = desc
         self.mMode = mode
@@ -27,5 +27,23 @@ class Task:
         self.mInitialDate = init_date
         self.mDueDate = due_date
         self.mIsBug = isBug
+        if self.mIsBug:
+            self.mIsBugOn = True
+            self.mIsBugOff = False
+        else:
+            self.mIsBugOff = True
+            self.mIsBugOn = False
         self.mIsBonus = isBonus
-        self.mIsDone = False
+        if self.mIsBonus:
+            self.mIsBonusOn = True
+            self.mIsBonusOff = False
+        else:
+            self.mIsBonusOff = True
+            self.mIsBonusOn = False
+        self.mIsDone = isDone
+        if self.mIsDone:
+            self.mIsDoneOn = True
+            self.mIsDoneOff = False
+        else:
+            self.mIsDoneOff = True
+            self.mIsDoneOn = False

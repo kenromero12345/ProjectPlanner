@@ -13,8 +13,8 @@ class UpdateTask(AddTask):
         self.mVarMode.set(task.mMode)
         self.mDEInitial.set_date(task.mInitialDate)
         self.mDEDue.set_date(task.mDueDate)
-        self.mIsBug = task.mIsBug
-        self.mIsBonus = task.mIsBonus
+        self.mIsBug = task.mIsBugOn
+        self.mIsBonus = task.mIsBonusOn
         if self.mIsBug:
             self.bugClicked()  # duplicate needed because it changes the variable
             self.bugClicked()
@@ -24,7 +24,7 @@ class UpdateTask(AddTask):
         self.mTextDescription.insert(1.0, task.mDesc)
         self.mBtnSubmit.config(text="Update")
         self.mBtnDelete = tk.Button(self.mFrameCommand, text="Delete", bg='red', fg='white')
-        self.mBtnSubmit.config(bg="orange")
+        self.mBtnSubmit.config(bg="yellow2")
         self.mBtnDelete.pack(side="right", expand=True, fill='both', padx=5, pady=5)
         if task.mIsDone:
             self.mCloseOpenBtn = tk.Button(self.mFrameCommand, text="Open", bg="orange", fg="white")
