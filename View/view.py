@@ -8,7 +8,7 @@ class View:
         self.mMenuFile = None
         self.mMenuHelp = None
         self.mMenuEdit = None
-
+        self.mTk = root
         frame = tk.Frame(root)
         self.menu_bar(root)
         self.mTaskList = taskList.TaskList(frame)

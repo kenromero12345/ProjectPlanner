@@ -10,12 +10,12 @@ class TaskList:
         self.mTk = frame
         top_frame = tk.Frame(frame)
 
-        self.mBtnUpdateMember = tk.Button(top_frame, text="Update Member")
+        self.mBtnUpdateMember = tk.Button(top_frame, text="Update Member", width=WIDTH)
         self.mBtnUpdateMember.pack(side="right", expand=True, fill='both', padx=5, pady=(5, 0))
 
         # top_frame_2 = tk.Frame(top_frame)
 
-        self.mBtnAddTask = tk.Button(top_frame, text="Add Task")
+        self.mBtnAddTask = tk.Button(top_frame, text="Add Task", width=WIDTH)
         self.mBtnAddTask.pack(side="left", expand=True, fill='both', padx=5, pady=(5, 0))
 
         # self.mBtnDeleteTask = tk.Button(top_frame_2, text="Delete Task", width=WIDTH)
@@ -51,13 +51,10 @@ class TaskList:
             self.mTvTaskList.column(col, minwidth=66, width=66, stretch=False, anchor="center")
 
         self.mTvTaskList.column("Title", minwidth=500, width=500, stretch=False, anchor="w")
-
-        scrollbar = ttk.Scrollbar(bottom_frame, orient="vertical", command=self.mTvTaskList.yview)
-
-        self.mTvTaskList.configure(xscrollcommand=scrollbar.set)
-
         self.mTvTaskList.pack(side="left", expand=True, fill='both', padx=(5, 0), pady=5)
 
-        scrollbar.pack(side="right", expand=True, fill='both', padx=(0, 5), pady=5)
+        self.mScrollbar = ttk.Scrollbar(bottom_frame, orient="vertical", command=self.mTvTaskList.yview)
+        self.mScrollbar.pack(side="left", expand=True, fill='both', padx=(0, 5), pady=5)
+        self.mTvTaskList.configure(yscrollcommand=self.mScrollbar.set)
 
         bottom_frame.pack(side="top", expand=True, fill='both')

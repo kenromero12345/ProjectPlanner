@@ -98,7 +98,7 @@ class AddTask:
         self.mFrameCommand = ttk.Frame(self.mTk)
         self.mBtnSubmit = tk.Button(self.mFrameCommand, text="Submit", bg="green", fg="white")
         self.mBtnSubmit.pack(side="left", expand=True, fill='both', padx=5, pady=5)
-        self.mBtnCancel = tk.Button(self.mFrameCommand, text="Cancel", command=self.mTk.destroy)
+        self.mBtnCancel = tk.Button(self.mFrameCommand, text="Cancel")
         self.mBtnCancel.pack(side="right", expand=True, fill='both', padx=5, pady=5)
         self.mFrameCommand.pack(side="top", fill="x")
         view.center(self.mTk)

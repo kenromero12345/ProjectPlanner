@@ -70,7 +70,7 @@ class Controller:
         self.mView.mMenuFile.entryconfigure(1, command=self.addTask)
         self.mView.mMenuFile.entryconfigure(2, command=self.updateMembers)
         self.mView.mMenuFile.entryconfigure(7, command=self.quit_and_save)
-        self.mView.mMenuHelp.entryconfigure(0, command=help)
+        self.mView.mMenuHelp.entryconfigure(0, command=helpTutorial)
         self.mView.mMenuHelp.entryconfigure(1, command=about)
         self.mView.mMenuEdit.entryconfigure(0, command=self.openFilter)
         self.mView.mMenuEdit.entryconfigure(1, command=self.taskListUpdate)
@@ -94,9 +94,15 @@ class Controller:
             self.mView.mTaskList.mLblDelete.config(text=DELETE_OFF)
 
     def openFilter(self):
+        self.hideTaskList()
         temp_root = tk.Tk()
         self.mFilterTasks = filterTasks.FilterTasks(temp_root)
         self.mFilterTasks.mBtnSubmit.config(command=self.filterClicked)
+        self.mFilterTasks.mBtnCancel.config(command=self.destroyFilter)
+
+    def destroyFilter(self):
+        self.mFilterTasks.mTk.destroy()
+        self.showTaskList()
 
     def filterClicked(self):
         self.mIsNo = self.mFilterTasks.mIsNo
@@ -118,6 +124,7 @@ class Controller:
         self.mIsBonusOff = self.mFilterTasks.mIsBonusOff
         self.filter()
         self.mFilterTasks.mTk.destroy()
+        self.showTaskList()
 
     def filter(self):
         # delete all tasks in view
@@ -197,9 +204,18 @@ class Controller:
         self.mRoot.title("Project Planner (" + self.mModel.mProjectName + ")")
 
     def addTask(self):
+        self.hideTaskList()
         temp_root = tk.Tk()
         self.mAddTask = addTask.AddTask(temp_root)
         self.mAddTask.mBtnSubmit.config(command=self.submitTask)
+        self.mAddTask.mBtnCancel.config(command=self.destroyAddTask)
+
+    def hideTaskList(self):
+        self.mView.mTk.withdraw()
+
+    def destroyAddTask(self):
+        self.mAddTask.mTk.destroy()
+        self.showTaskList()
 
     def taskListUpdate(self):
         # delete all tasks in view
@@ -228,7 +244,7 @@ class Controller:
             self.mModel.mTaskList.append(t)
 
             self.taskListUpdate()  # update task list view
-            self.mAddTask.mTk.destroy()  # close add task window
+            self.destroyAddTask()
 
     def isDuplicateTitle(self, is_add):
         if is_add:  # for add task
@@ -268,13 +284,17 @@ class Controller:
             self.mModel.mTaskList.append(t)
 
             self.taskListUpdate()  # update task list view
-            self.mUpdateTask.mTk.destroy()  # close edit task window
+            self.destroyUpdateTask()
             self.mIsDoneUpdated = False
 
     def deleteTaskView(self):
         self.deleteTaskOnUpdate()
-        self.taskListUpdate()  # update task list view
-        self.mUpdateTask.mTk.destroy()  # close edit task window
+        self.destroyUpdateTask()
+        self.showTaskList()
+
+    def showTaskList(self):
+        self.mView.mTk.update()
+        self.mView.mTk.deiconify()
 
     def deleteTaskOnUpdate(self):
         # remove old task
@@ -308,6 +328,8 @@ class Controller:
                         tsk = t
                         break
                 if tsk is not None:
+                    if hasattr(self.mEditDeletePopup, "mTk"):
+                        self.mEditDeletePopup.mTk.destroy()
                     temp_root = tk.Tk()
                     self.mEditDeletePopup = editDeletePopup.EditDeletePopup(temp_root, self.mView.mTaskList.mTk)
                     self.mEditDeletePopup.mBtnUpdate.config(command=lambda: self.createAndDestroyUpdateTask(tsk))
@@ -390,10 +412,16 @@ class Controller:
         #         self.createUpdateTask(temp_root, tsk)
 
     def createUpdateTask(self, temp_root, tsk):
+        self.hideTaskList()
         self.mUpdateTask = UpdateTask(temp_root, tsk)
         self.mUpdateTask.mBtnSubmit.config(command=self.editTaskView)
         self.mUpdateTask.mCloseOpenBtn.config(command=self.closeOpenTask)
         self.mUpdateTask.mBtnDelete.config(command=self.deleteTaskView)
+        self.mUpdateTask.mBtnCancel.config(command=self.destroyUpdateTask)
+
+    def destroyUpdateTask(self):
+        self.mUpdateTask.mTk.destroy()
+        self.showTaskList()
 
     def updateMembers(self):
         temp_root = tk.Tk()
@@ -404,5 +432,6 @@ class Controller:
 def about():
     messagebox.showinfo(title="About", message=ABOUT_MSG)
 
-def help():
+
+def helpTutorial():
     messagebox.showinfo(title="Help", message=HELP_MSG)
