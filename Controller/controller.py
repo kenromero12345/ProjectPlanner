@@ -6,13 +6,20 @@ from pathlib import Path
 from tkinter import messagebox
 from Model import model
 from Model import task
-from View import addTask
+from View import addTask, updateMembers, editDeletePopup
 from View import filterTasks
 from View import view
 from View.updateTask import UpdateTask
 
+DELETE_OFF = "Delete: OFF"
+
+DELETE_ON = "Delete: ON"
+
 ABOUT_MSG = "A python application for project planning for programmers to use to be efficient in their tasks with " \
             "their team or their own.\n\nCreated by Ken Gil Romero, a master student of University of Washington"
+
+HELP_MSG = "A little tutorial to help users use the application.\n\nTo Add a task, click the add task button or the " \
+           "File menu then New...\n\tA new window will appear where the user will input information for a task "
 
 FILTER_OFF = "Filter: OFF"
 FILTER_ON = "Filter: ON"
@@ -51,6 +58,9 @@ class Controller:
         self.mIsBugOff = None
         self.mIsBonusOff = None
         self.mIsBonusOn = None
+        self.mUpdateMembers = None
+        self.mDeleteMode = False
+        self.mEditDeletePopup = False
 
         # menu bar command
         self.mView.mMenuFile.entryconfigure(0, command=self.newProject)
@@ -60,13 +70,14 @@ class Controller:
         self.mView.mMenuFile.entryconfigure(1, command=self.addTask)
         self.mView.mMenuFile.entryconfigure(2, command=self.updateMembers)
         self.mView.mMenuFile.entryconfigure(7, command=self.quit_and_save)
-        self.mView.mMenuHelp.entryconfigure(0, command=self.tutorial)
+        self.mView.mMenuHelp.entryconfigure(0, command=help)
         self.mView.mMenuHelp.entryconfigure(1, command=about)
         self.mView.mMenuEdit.entryconfigure(0, command=self.openFilter)
         self.mView.mMenuEdit.entryconfigure(1, command=self.taskListUpdate)
 
         # Task list
         self.mView.mTaskList.mBtnAddTask.config(command=self.addTask)
+        # self.mView.mTaskList.mBtnDeleteTask.config(command=self.deleteTaskMode)
         self.mView.mTaskList.mBtnUpdateMember.config(command=self.updateMembers)
         self.mView.mTaskList.mBtnFilter.config(command=self.openFilter)
         self.mView.mTaskList.mBtnResetFilter.config(command=self.taskListUpdate)
@@ -74,6 +85,13 @@ class Controller:
         self.mView.mTaskList.mTvTaskList.bind("<Button-1>", self.taskClicked)
 
         self.mRoot.protocol('WM_DELETE_WINDOW', self.quit_and_save)  # override close button
+
+    def deleteTaskMode(self):
+        self.mDeleteMode = not self.mDeleteMode
+        if self.mDeleteMode:
+            self.mView.mTaskList.mLblDelete.config(text=DELETE_ON)
+        else:
+            self.mView.mTaskList.mLblDelete.config(text=DELETE_OFF)
 
     def openFilter(self):
         temp_root = tk.Tk()
@@ -145,10 +163,6 @@ class Controller:
         if messagebox.askyesno("Exit", "If you exit the application, any changes you have made will be lost. "
                                        "Are you sure you wish to leave?"):
             self.mRoot.destroy()
-
-    def tutorial(self):
-        print("tutorial")
-        # TODO popup
 
     def newProject(self):
         if messagebox.askyesno("Save before Exit", "Do you want to save the current project first?"):
@@ -237,7 +251,7 @@ class Controller:
                 != self.mUpdateTask.mOldTitle:  # unique constraint for edit
             messagebox.showwarning(title="Warning", message="No duplicate titles allowed!")
         else:
-            old_t = self.deleteTask()  # delete old task
+            old_t = self.deleteTaskOnUpdate()  # delete old task
 
             if self.mIsDoneUpdated:
                 temp_done = not old_t.mIsDone
@@ -258,11 +272,11 @@ class Controller:
             self.mIsDoneUpdated = False
 
     def deleteTaskView(self):
-        self.deleteTask()
+        self.deleteTaskOnUpdate()
         self.taskListUpdate()  # update task list view
         self.mUpdateTask.mTk.destroy()  # close edit task window
 
-    def deleteTask(self):
+    def deleteTaskOnUpdate(self):
         # remove old task
         for t in self.mModel.mTaskList:
             if t.mTitle == self.mUpdateTask.mOldTitle:
@@ -271,8 +285,43 @@ class Controller:
 
     def taskClicked(self, instance):
         region = self.mView.mTaskList.mTvTaskList.identify("region", instance.x, instance.y)
+        item = self.mView.mTaskList.mTvTaskList.identify("item", instance.x, instance.y)
         if region == "heading":
             self.sort(instance)
+        # elif self.mView.mTaskList.mLblDelete['text'] == DELETE_ON:
+        #     if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
+        #         item = self.mView.mTaskList.mTvTaskList.selection()[0]
+        #         # get task
+        #         tsk = None
+        #         for t in self.mModel.mTaskList:
+        #             if t.mTitle == self.mView.mTaskList.mTvTaskList.item(item, "values")[0]:
+        #                 tsk = t
+        #                 break
+        #         self.deleteTask(tsk)
+        elif item:
+            if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
+                item = self.mView.mTaskList.mTvTaskList.selection()[0]
+                # get task
+                tsk = None
+                for t in self.mModel.mTaskList:
+                    if t.mTitle == self.mView.mTaskList.mTvTaskList.item(item, "values")[0]:
+                        tsk = t
+                        break
+                if tsk is not None:
+                    temp_root = tk.Tk()
+                    self.mEditDeletePopup = editDeletePopup.EditDeletePopup(temp_root, self.mView.mTaskList.mTk)
+                    self.mEditDeletePopup.mBtnUpdate.config(command=lambda: self.createAndDestroyUpdateTask(tsk))
+                    self.mEditDeletePopup.mBtnDelete.config(command=lambda: self.deleteTask(tsk))
+
+    def deleteTask(self, tsk):
+        self.mModel.mTaskList.remove(tsk)
+        self.taskListUpdate()
+        self.mEditDeletePopup.mTk.destroy()
+
+    def createAndDestroyUpdateTask(self, tsk):
+        self.mEditDeletePopup.mTk.destroy()
+        new_root = tk.Tk()
+        self.createUpdateTask(new_root, tsk)
 
     def sort(self, instance):
         if self.mView.mTaskList.mTvTaskList.identify_column(instance.x) == "#1":
@@ -324,27 +373,36 @@ class Controller:
         self.mTLColumnClicked = self.mView.mTaskList.mTvTaskList.identify_column(instance.x)
 
     def taskDoubleClicked(self, instance):
-        region = self.mView.mTaskList.mTvTaskList.identify("region", instance.x, instance.y)
-        if region == "heading":
-            self.sort(instance)
-        else:
-            if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
-                temp_root = tk.Tk()
-                item = self.mView.mTaskList.mTvTaskList.selection()[0]
-                # get task
-                tsk = None
-                for t in self.mModel.mTaskList:
-                    if t.mTitle == self.mView.mTaskList.mTvTaskList.item(item, "values")[0]:
-                        tsk = t
-                        break
-                self.mUpdateTask = UpdateTask(temp_root, tsk)
-                self.mUpdateTask.mBtnSubmit.config(command=self.editTaskView)
-                self.mUpdateTask.mCloseOpenBtn.config(command=self.closeOpenTask)
-                self.mUpdateTask.mBtnDelete.config(command=self.deleteTaskView)
+        self.taskClicked(instance)
+        # region = self.mView.mTaskList.mTvTaskList.identify("region", instance.x, instance.y)
+        # if region == "heading":
+        #     self.sort(instance)
+        # else:
+        #     if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
+        #         temp_root = tk.Tk()
+        #         item = self.mView.mTaskList.mTvTaskList.selection()[0]
+        #         # get task
+        #         tsk = None
+        #         for t in self.mModel.mTaskList:
+        #             if t.mTitle == self.mView.mTaskList.mTvTaskList.item(item, "values")[0]:
+        #                 tsk = t
+        #                 break
+        #         self.createUpdateTask(temp_root, tsk)
+
+    def createUpdateTask(self, temp_root, tsk):
+        self.mUpdateTask = UpdateTask(temp_root, tsk)
+        self.mUpdateTask.mBtnSubmit.config(command=self.editTaskView)
+        self.mUpdateTask.mCloseOpenBtn.config(command=self.closeOpenTask)
+        self.mUpdateTask.mBtnDelete.config(command=self.deleteTaskView)
 
     def updateMembers(self):
-        print("do me")
+        temp_root = tk.Tk()
+        self.mUpdateMembers = updateMembers.UpdateMembers(temp_root)
+        self.mFilterTasks.mBtnAddMembers.config(command=self.addMembersClicked)
 
 
 def about():
     messagebox.showinfo(title="About", message=ABOUT_MSG)
+
+def help():
+    messagebox.showinfo(title="Help", message=HELP_MSG)
