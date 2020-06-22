@@ -4,11 +4,13 @@ import tkinter as tk
 from os import path
 from pathlib import Path
 from tkinter import messagebox
-from Model import model
+from Model import model, member
 from Model import task
-from View import addTask, updateMembers, editDeletePopup
+from Model.member import Member
+from View import addTask, updateMembers, editDeletePopup, addMember
 from View import filterTasks
 from View import view
+from View.updateMember import UpdateMember
 from View.updateTask import UpdateTask
 
 DELETE_OFF = "Delete: OFF"
@@ -33,10 +35,13 @@ class Controller:
         self.mIsDoneUpdated = False
         self.mAddTask = None
         self.mUpdateTask = None
+        self.mAddMember = None
         self.mTLColumnClicked = None
+        self.mUpdateMembers = None
         self.mIsReverse = False
         self.mFilterTasks = None
         self.mPath = Path(os.getcwd())
+        self.mUpdateMember = None
         self.mRoot = tk.Tk()
         self.mModel = model.Model()
         self.mView = view.View(self.mRoot)
@@ -81,7 +86,7 @@ class Controller:
         self.mView.mTaskList.mBtnUpdateMember.config(command=self.updateMembers)
         self.mView.mTaskList.mBtnFilter.config(command=self.openFilter)
         self.mView.mTaskList.mBtnResetFilter.config(command=self.taskListUpdate)
-        self.mView.mTaskList.mTvTaskList.bind("<Double-1>", self.taskDoubleClicked)
+        self.mView.mTaskList.mTvTaskList.bind("<Double-1>", self.taskClicked)  # taskDoubleClicked
         self.mView.mTaskList.mTvTaskList.bind("<Button-1>", self.taskClicked)
 
         self.mRoot.protocol('WM_DELETE_WINDOW', self.quit_and_save)  # override close button
@@ -94,15 +99,14 @@ class Controller:
             self.mView.mTaskList.mLblDelete.config(text=DELETE_OFF)
 
     def openFilter(self):
-        self.hideTaskList()
-        temp_root = tk.Tk()
+        temp_root = tk.Toplevel(self.mView.mTk)
+        pauseTaskList(temp_root)
         self.mFilterTasks = filterTasks.FilterTasks(temp_root)
         self.mFilterTasks.mBtnSubmit.config(command=self.filterClicked)
         self.mFilterTasks.mBtnCancel.config(command=self.destroyFilter)
 
     def destroyFilter(self):
         self.mFilterTasks.mTk.destroy()
-        self.showTaskList()
 
     def filterClicked(self):
         self.mIsNo = self.mFilterTasks.mIsNo
@@ -124,7 +128,6 @@ class Controller:
         self.mIsBonusOff = self.mFilterTasks.mIsBonusOff
         self.filter()
         self.mFilterTasks.mTk.destroy()
-        self.showTaskList()
 
     def filter(self):
         # delete all tasks in view
@@ -204,18 +207,14 @@ class Controller:
         self.mRoot.title("Project Planner (" + self.mModel.mProjectName + ")")
 
     def addTask(self):
-        self.hideTaskList()
-        temp_root = tk.Tk()
-        self.mAddTask = addTask.AddTask(temp_root)
+        temp_root = tk.Toplevel(self.mView.mTk)
+        pauseTaskList(temp_root)
+        self.mAddTask = addTask.AddTask(temp_root, self.mModel.mMemberList, self.mModel.getNames())
         self.mAddTask.mBtnSubmit.config(command=self.submitTask)
         self.mAddTask.mBtnCancel.config(command=self.destroyAddTask)
 
-    def hideTaskList(self):
-        self.mView.mTk.withdraw()
-
     def destroyAddTask(self):
         self.mAddTask.mTk.destroy()
-        self.showTaskList()
 
     def taskListUpdate(self):
         # delete all tasks in view
@@ -235,10 +234,15 @@ class Controller:
         elif self.isDuplicateTitle(True):  # unique constraint
             messagebox.showwarning(title="Warning", message="No duplicate titles allowed!")
         else:
+
+            assignees = []
+            for x in self.mAddTask.mLBAssignees.curselection():
+                assignees.append(self.mAddTask.mLBAssignees.get(x))
+
             # add task
             t = task.Task(self.mAddTask.mVarTitle.get(), self.mAddTask.mTextDescription.get("1.0", "end"),
-                          self.mAddTask.mVarMode.get(), self.mAddTask.mVarAssignees.get(),
-                          self.mAddTask.mScaleSeverity.get(), self.mAddTask.mVarInProgress.get(),
+                          self.mAddTask.mVarMode.get(), assignees, self.mAddTask.mScaleSeverity.get(),
+                          self.mAddTask.mVarInProgress.get(),
                           self.mAddTask.mDEInitial.get_date(), self.mAddTask.mDEDue.get_date(),
                           self.mAddTask.mIsBug, self.mAddTask.mIsBonus, False)
             self.mModel.mTaskList.append(t)
@@ -274,6 +278,10 @@ class Controller:
             else:
                 temp_done = old_t.mIsDone
 
+            assignees = []
+            for x in self.mUpdateTask.mLBAssignees.curselection():
+                assignees.append(self.mUpdateTask.mLBAssignees.get(x))
+
             # add task
             t = task.Task(self.mUpdateTask.mVarTitle.get(), self.mUpdateTask.mTextDescription.get("1.0", "end"),
                           self.mUpdateTask.mVarMode.get(), self.mUpdateTask.mVarAssignees.get(),
@@ -290,11 +298,6 @@ class Controller:
     def deleteTaskView(self):
         self.deleteTaskOnUpdate()
         self.destroyUpdateTask()
-        self.showTaskList()
-
-    def showTaskList(self):
-        self.mView.mTk.update()
-        self.mView.mTk.deiconify()
 
     def deleteTaskOnUpdate(self):
         # remove old task
@@ -330,7 +333,7 @@ class Controller:
                 if tsk is not None:
                     if hasattr(self.mEditDeletePopup, "mTk"):
                         self.mEditDeletePopup.mTk.destroy()
-                    temp_root = tk.Tk()
+                    temp_root = tk.Toplevel(self.mView.mTk)
                     self.mEditDeletePopup = editDeletePopup.EditDeletePopup(temp_root, self.mView.mTaskList.mTk)
                     self.mEditDeletePopup.mBtnUpdate.config(command=lambda: self.createAndDestroyUpdateTask(tsk))
                     self.mEditDeletePopup.mBtnDelete.config(command=lambda: self.deleteTask(tsk))
@@ -342,7 +345,7 @@ class Controller:
 
     def createAndDestroyUpdateTask(self, tsk):
         self.mEditDeletePopup.mTk.destroy()
-        new_root = tk.Tk()
+        new_root = tk.Toplevel(self.mView.mTk)
         self.createUpdateTask(new_root, tsk)
 
     def sort(self, instance):
@@ -394,26 +397,26 @@ class Controller:
             self.taskListUpdate()
         self.mTLColumnClicked = self.mView.mTaskList.mTvTaskList.identify_column(instance.x)
 
-    def taskDoubleClicked(self, instance):
-        self.taskClicked(instance)
-        # region = self.mView.mTaskList.mTvTaskList.identify("region", instance.x, instance.y)
-        # if region == "heading":
-        #     self.sort(instance)
-        # else:
-        #     if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
-        #         temp_root = tk.Tk()
-        #         item = self.mView.mTaskList.mTvTaskList.selection()[0]
-        #         # get task
-        #         tsk = None
-        #         for t in self.mModel.mTaskList:
-        #             if t.mTitle == self.mView.mTaskList.mTvTaskList.item(item, "values")[0]:
-        #                 tsk = t
-        #                 break
-        #         self.createUpdateTask(temp_root, tsk)
+    # def taskDoubleClicked(self, instance):
+    #     self.taskClicked(instance)
+    #     # region = self.mView.mTaskList.mTvTaskList.identify("region", instance.x, instance.y)
+    #     # if region == "heading":
+    #     #     self.sort(instance)
+    #     # else:
+    #     #     if len(self.mView.mTaskList.mTvTaskList.selection()) > 0:
+    #     #         temp_root = tk.Tk()
+    #     #         item = self.mView.mTaskList.mTvTaskList.selection()[0]
+    #     #         # get task
+    #     #         tsk = None
+    #     #         for t in self.mModel.mTaskList:
+    #     #             if t.mTitle == self.mView.mTaskList.mTvTaskList.item(item, "values")[0]:
+    #     #                 tsk = t
+    #     #                 break
+    #     #         self.createUpdateTask(temp_root, tsk)
 
     def createUpdateTask(self, temp_root, tsk):
-        self.hideTaskList()
-        self.mUpdateTask = UpdateTask(temp_root, tsk)
+        pauseTaskList(temp_root)
+        self.mUpdateTask = UpdateTask(temp_root, self.mModel.mMemberList, self.mModel.getNames(), tsk)
         self.mUpdateTask.mBtnSubmit.config(command=self.editTaskView)
         self.mUpdateTask.mCloseOpenBtn.config(command=self.closeOpenTask)
         self.mUpdateTask.mBtnDelete.config(command=self.deleteTaskView)
@@ -421,12 +424,131 @@ class Controller:
 
     def destroyUpdateTask(self):
         self.mUpdateTask.mTk.destroy()
-        self.showTaskList()
 
     def updateMembers(self):
-        temp_root = tk.Tk()
+        temp_root = tk.Toplevel(self.mView.mTk)
+        pauseTaskList(temp_root)
+        if len(self.mModel.mMemberList) == 0:
+            self.mModel.mMemberList.append(Member("Me"))
         self.mUpdateMembers = updateMembers.UpdateMembers(temp_root)
-        self.mFilterTasks.mBtnAddMembers.config(command=self.addMembersClicked)
+        self.mUpdateMembers.mBtnAddMember.config(command=self.addMembersClicked)
+        self.mUpdateMembers.mTvMemberList.bind("<Double-1>", self.memberClicked)  # taskDoubleClicked
+        self.mUpdateMembers.mTvMemberList.bind("<Button-1>", self.memberClicked)
+        self.memberListUpdate()
+
+    def memberClicked(self, instance):
+        # region = self.mUpdateMembers.mTvMemberList.identify("region", instance.x, instance.y)
+        item = self.mUpdateMembers.mTvMemberList.identify("item", instance.x, instance.y)
+        # if region == "heading":
+        #     self.sort(instance)
+        # elif item:
+        if item:
+            if len(self.mUpdateMembers.mTvMemberList.selection()) > 0:
+                item = self.mUpdateMembers.mTvMemberList.selection()[0]
+                # get task
+                m = None
+                for t in self.mModel.mMemberList:
+                    if t.mName == self.mUpdateMembers.mTvMemberList.item(item, "values")[0]:
+                        m = t
+                        break
+                if m is not None:
+                    if hasattr(self.mEditDeletePopup, "mTk"):
+                        self.mEditDeletePopup.mTk.destroy()
+                    temp_root = tk.Toplevel(self.mUpdateMembers.mTk)
+                    self.mEditDeletePopup = editDeletePopup.EditDeletePopup(temp_root, self.mUpdateMembers.mTk)
+                    self.mEditDeletePopup.mBtnUpdate.config(command=lambda: self.createAndDestroyUpdateMember(m))
+                    self.mEditDeletePopup.mBtnDelete.config(command=lambda: self.deleteMember(m))
+
+    def createAndDestroyUpdateMember(self, m):
+        self.mEditDeletePopup.mTk.destroy()
+        new_root = tk.Toplevel(self.mUpdateMembers.mTk)
+        self.createUpdateMember(new_root, m)
+
+    def createUpdateMember(self, root, m):
+        pauseTaskList(root)
+        self.mUpdateMember = UpdateMember(root, m)
+        self.mUpdateMember.mBtnSubmit.config(command=self.editMember)
+        self.mUpdateMember.mBtnDelete.config(command=lambda: self.deleteMember(m))
+        self.mUpdateMember.mBtnCancel.config(command=self.destroyUpdateMember)
+        self.mUpdateMember.mTk.protocol('WM_DELETE_WINDOW', self.destroyUpdateMember)
+
+    def destroyUpdateMember(self):
+        self.mUpdateMember.mTk.destroy()
+        pauseTaskList(self.mUpdateMembers.mTk)
+
+    def editMember(self):
+        if self.mUpdateMember.mVarName.get().strip() == "":  # empty title constraint
+            messagebox.showwarning(title="Warning", message="No empty name allowed!")
+        elif self.isDuplicateName(False) and self.mUpdateMember.mVarName.get() \
+                != self.mUpdateMember.mOldName:  # unique constraint
+            messagebox.showwarning(title="Warning", message="No duplicate name allowed!")
+        else:
+            for m in self.mModel.mMemberList:
+                if m.mName == self.mUpdateMember.mOldName:
+                    self.mModel.mMemberList.remove(m)
+                    break
+
+            # add task
+            t = member.Member(self.mUpdateMember.mVarName.get())
+            self.mModel.mMemberList.append(t)
+
+            self.memberListUpdate()  # update task list view
+
+            self.destroyUpdateMember()
+
+            pauseTaskList(self.mUpdateMembers.mTk)
+
+    def deleteMember(self, m):
+        self.mModel.mMemberList.remove(m)
+        self.memberListUpdate()
+        self.mEditDeletePopup.mTk.destroy()
+        if hasattr(self.mUpdateMember, "mTk") and hasattr(self.mUpdateMember.mTk, "destroy"):
+            self.mUpdateMember.mTk.destroy()
+        pauseTaskList(self.mUpdateMembers.mTk)
+
+    def addMembersClicked(self):
+        temp_root = tk.Toplevel(self.mUpdateMembers.mTk)
+        pauseTaskList(temp_root)
+        self.mAddMember = addMember.AddMember(temp_root)
+        self.mAddMember.mTk.protocol('WM_DELETE_WINDOW', self.destroyAddMember)
+        self.mAddMember.mBtnSubmit.config(command=self.submitMember)
+        self.mAddMember.mBtnCancel.config(command=self.destroyAddMember)
+
+    def destroyAddMember(self):
+        self.mAddMember.mTk.destroy()
+        pauseTaskList(self.mUpdateMembers.mTk)
+
+    def submitMember(self):
+        if self.mAddMember.mVarName.get().strip() == "":  # empty title constraint
+            messagebox.showwarning(title="Warning", message="No empty name allowed!")
+        elif self.isDuplicateName(True):  # unique constraint
+            messagebox.showwarning(title="Warning", message="No duplicate name allowed!")
+        else:
+            # add task
+            t = member.Member(self.mAddMember.mVarName.get())
+            self.mModel.mMemberList.append(t)
+
+            self.memberListUpdate()  # update task list view
+            self.destroyAddMember()
+
+    def memberListUpdate(self):
+        # delete all members in view
+        self.mUpdateMembers.mTvMemberList.delete(*self.mUpdateMembers.mTvMemberList.get_children())
+
+        # add all member in view
+        for t in self.mModel.mMemberList:
+            self.mUpdateMembers.mTvMemberList.insert("", "end",
+                                                     values=(t.mName))
+
+    def isDuplicateName(self, is_add):
+        if is_add:  # for add
+            name = self.mAddMember.mVarName.get()
+        else:  # for update
+            name = self.mUpdateMember.mVarName.get()
+        for t in self.mModel.mMemberList:
+            if t.mName == name:
+                return True
+        return False
 
 
 def about():
@@ -435,3 +557,7 @@ def about():
 
 def helpTutorial():
     messagebox.showinfo(title="Help", message=HELP_MSG)
+
+
+def pauseTaskList(window):
+    window.grab_set()

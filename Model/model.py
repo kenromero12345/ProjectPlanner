@@ -14,6 +14,7 @@ class Model:
 
     def __init__(self):
         self.mTaskList = []
+        self.mMemberList = []
         self.mSavedPath = None
         self.mProjectName = ""
 
@@ -70,3 +71,9 @@ class Model:
 
     def save_path(self, file):
         pickle.dump(self.mSavedPath, open(file, "wb"))
+
+    def getNames(self):
+        lst = []
+        for m in self.mMemberList:
+            lst.append(m.mName)
+        return lst

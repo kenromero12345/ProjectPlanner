@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+
+from Model.member import Member
 from View import view
 from tkcalendar import DateEntry
 
@@ -9,22 +11,18 @@ MODES = [
     "Todo",
     "Testing"
 ]
-GROUP = [
-    "Me",
-    "Someone"
-]
 
 
 class AddTask:
 
-    def __init__(self, t):
+    def __init__(self, t, members, member_names):
         self.mTk = t
         self.mTk.resizable(0, 0)
         self.mVarInProgress = tk.StringVar(self.mTk)
         self.mScaleSeverity = tk.Scale(self.mTk, from_=1.0, to=10.0, tickinterval=1, orient="horizontal")
         self.mVarAssignees = tk.StringVar(self.mTk)
         self.mVarMode = tk.StringVar(self.mTk)
-        self.mTextDescription = tk.Text(self.mTk, height=10, width=20)
+        self.mTextDescription = tk.Text(self.mTk, height=5, width=20)
         self.mVarTitle = tk.StringVar(self.mTk)
         self.mVarTitle.set("")
         m_entry_title = ttk.Entry(self.mTk, font=NORM_FONT, textvariable=self.mVarTitle)
@@ -78,19 +76,35 @@ class AddTask:
         self.mVarInProgress.set("Yes")  # initialize
         label_assignees = ttk.Label(self.mTk, text="Assignees", font=NORM_FONT)
         label_assignees.pack(side="top", fill="x", pady=(5, 2), padx=5)
-        self.mVarAssignees.set(GROUP[0])
-        cb_assignees = ttk.Combobox(self.mTk, values=GROUP, state="readonly", textvariable=self.mVarAssignees)
-        # cb_assignees.set(GROUP[0])
-        cb_assignees.pack(fill="x", padx=5)
+        if len(members) == 0:
+            members.append(Member("Me"))
+            member_names.append("Me")
+        # self.mVarAssignees.set(members[0].mName)
+        # cb_assignees = ttk.Combobox(self.mTk, values=member_names, state="readonly",
+        #                             textvariable=self.mVarAssignees)
+        # cb_assignees.pack(fill="x", padx=5)
+        frame_assign = tk.Frame(self.mTk)
+        self.mLBAssignees = tk.Listbox(frame_assign, selectmode=tk.MULTIPLE, height=3)
+        for item in member_names:
+            self.mLBAssignees.insert(tk.END, item)
+        self.mLBAssignees.pack(side="left", expand=True, fill='both', padx=(5, 0))
+
+        self.mScrollbar = ttk.Scrollbar(frame_assign, orient="vertical", command=self.mLBAssignees.yview)
+        self.mScrollbar.pack(side="left", fill='both', padx=(0, 5), pady=5)
+        self.mLBAssignees.configure(yscrollcommand=self.mScrollbar.set)
+
+        frame_assign.pack(side="top", fill="x")
+
         label_in_progress = ttk.Label(self.mTk, text="In Progress", font=NORM_FONT)
         label_in_progress.pack(side="top", fill="x", pady=(5, 2), padx=5)
         # TODO only if TESTING or TODO not Backlog
         self.mFrameInProgress = ttk.Frame(self.mTk)
         self.mRbtnYes = tk.Radiobutton(self.mFrameInProgress, text="Yes", indicatoron=0, width=30, val="Yes",
-                                variable=self.mVarInProgress, selectcolor="green", fg="white", command=self.yesClicked)
+                                       variable=self.mVarInProgress, selectcolor="green", fg="white",
+                                       command=self.yesClicked)
         self.mRbtnYes.pack(side="left", fill="x", pady=(2, 8), padx=(10, 5))
         self.mRbtnNo = tk.Radiobutton(self.mFrameInProgress, text="No", indicatoron=0, width=30, val="No",
-                               variable=self.mVarInProgress, selectcolor="red", command=self.noClicked)
+                                      variable=self.mVarInProgress, selectcolor="red", command=self.noClicked)
         self.mRbtnNo.pack(side="right", fill="x", pady=(2, 8), padx=(5, 10))
         self.mFrameInProgress.pack(side="top", fill="x")
         separator = ttk.Separator(self.mTk, orient="horizontal")

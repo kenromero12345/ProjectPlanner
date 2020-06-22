@@ -1,15 +1,25 @@
-from View.addTask import AddTask
-from tkinter import ttk
 import tkinter as tk
+
+from View.addTask import AddTask
 
 
 class UpdateTask(AddTask):
-    def __init__(self, t, task):
-        AddTask.__init__(self, t)
+    def __init__(self, t, members, member_names, task):
+        AddTask.__init__(self, t, members, member_names)
         self.mVarTitle.set(task.mTitle)
         self.mVarInProgress.set(task.mInProgress)
         self.mScaleSeverity.set(task.mSeverity)
-        self.mVarAssignees.set(task.mAssignees)
+        # self.mVarAssignees.set(task.mAssignees)
+        for a in task.mAssignees:
+            # self.mLBAssignees.activate(self.mLBAssignees.get(0, "end").index(a))
+            index = self.mLBAssignees.get(0, "end").index(a)
+            self.mLBAssignees.selection_set(index)
+            self.mLBAssignees.see(index)
+            self.mLBAssignees.activate(index)
+            self.mLBAssignees.selection_anchor(index)
+
+        # print(task.mAssignees)
+
         self.mVarMode.set(task.mMode)
         self.mDEInitial.set_date(task.mInitialDate)
         self.mDEDue.set_date(task.mDueDate)
