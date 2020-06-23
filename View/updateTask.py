@@ -5,6 +5,7 @@ from View.addTask import AddTask
 
 class UpdateTask(AddTask):
     def __init__(self, t, members, member_names, task):
+        connection
         AddTask.__init__(self, t, members, member_names)
         self.mVarTitle.set(task.mTitle)
         self.mVarInProgress.set(task.mInProgress)
